@@ -16,6 +16,9 @@ highlight_color = (171,178,191)
 line_padding = 30
 line_stroke = 20
 
+player = "O"
+opponent = "X"
+
 board = [
     "", "", "", 
     "", "", "", 
@@ -35,12 +38,18 @@ pygame.display.set_caption("Tic-Tac-Toe")
 screen.fill(background_color)
 
 def reset(winner):
+    global isGameRunning, player
+    score = 0
     if(winner != ""):
         print(winner + " wins!")
+        if(winner == player):
+            score = 1
+        else:
+            score = -1
     else:
         print("Tie game!")
-    global isGameRunning
     isGameRunning = False
+    return score
 
 def new_game():
     time.sleep(1)
@@ -61,7 +70,7 @@ def lines():
 
 def marker(board):
     for i in range(9):
-        if(board[i] == "X"):
+        if(board[i] == player):
             color = player_color
         else:
             color = opponent_color
@@ -87,38 +96,45 @@ def random_click(player):
             marker(board)            
             break
 
+def score_board(board):
+    if board[0] == board[1] == board[2] != "": 
+            pygame.draw.line(screen, highlight_color, squares[0], squares[2], 30)
+            return reset(board[0])
+    elif board[3] == board[4] == board[5] != "": 
+            pygame.draw.line(screen, highlight_color, squares[3], squares[5], 30)
+            return reset(board[3])
+    elif board[6] == board[7] == board[8] != "":
+            pygame.draw.line(screen, highlight_color, squares[6], squares[8], 30)
+            return reset(board[6])
+    elif board[0] == board[3] == board[6] != "":
+            pygame.draw.line(screen, highlight_color, squares[0], squares[6], 30)
+            return reset(board[0])
+    elif board[1] == board[4] == board[7] != "": 
+            pygame.draw.line(screen, highlight_color, squares[1], squares[7], 30)
+            return reset(board[1])
+    elif board[2] == board[5] == board[8] != "": 
+            pygame.draw.line(screen, highlight_color, squares[2], squares[8], 30)
+            return reset(board[2])
+    elif board[0] == board[4] == board[8] != "": 
+            pygame.draw.line(screen, highlight_color, squares[0], squares[8], 30)
+            return reset(board[0])
+    elif board[2] == board[4] == board[6] != "": 
+            pygame.draw.line(screen, highlight_color, squares[2], squares[6], 30)
+            return reset(board[2])
+    else:
+        return 0
+    
+
 def check_board():
     free_squares = 0
     for i in range(9):
         if board[i] == "":
             free_squares += 1
+    if score_board(board) == 0:
+        if(free_squares == 0):
+            reset("")
     
-    if board[0] == board[1] == board[2] != "": 
-            pygame.draw.line(screen, highlight_color, squares[0], squares[2], 30)
-            reset(board[0])
-    elif board[3] == board[4] == board[5] != "": 
-            pygame.draw.line(screen, highlight_color, squares[3], squares[5], 30)
-            reset(board[3])
-    elif board[6] == board[7] == board[8] != "":
-            pygame.draw.line(screen, highlight_color, squares[6], squares[8], 30)
-            reset(board[6])
-    elif board[0] == board[3] == board[6] != "":
-            pygame.draw.line(screen, highlight_color, squares[0], squares[6], 30)
-            reset(board[0])
-    elif board[1] == board[4] == board[7] != "": 
-            pygame.draw.line(screen, highlight_color, squares[1], squares[7], 30)
-            reset(board[1])
-    elif board[2] == board[5] == board[8] != "": 
-            pygame.draw.line(screen, highlight_color, squares[2], squares[8], 30)
-            reset(board[2])
-    elif board[0] == board[4] == board[8] != "": 
-            pygame.draw.line(screen, highlight_color, squares[0], squares[8], 30)
-            reset(board[0])
-    elif board[2] == board[4] == board[6] != "": 
-            pygame.draw.line(screen, highlight_color, squares[2], squares[6], 30)
-            reset(board[2])
-    elif(free_squares == 0):
-        reset("")
+    
 
 lines()
 
@@ -135,10 +151,10 @@ while True:
     if isGameRunning:
         if isPlayerTurn:
 
-            if pos is not None and click(pos, "X") == 1:
+            if pos is not None and click(pos, player) == 1:
                 isPlayerTurn = False
         else:
-            random_click("O")
+            random_click(opponent)
             isPlayerTurn = True
         check_board()
 
