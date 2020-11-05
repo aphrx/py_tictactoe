@@ -99,24 +99,25 @@ def click(pos, player):
 
 
 # Minimax Opponent
-def minimaxClick(board, turn):
+def minimaxClick(turn):
+    
     for i in range(9):
-        if board[i] == "":
-            board[i] = turn
-            print(board)
-
-            print(score(board, turn))
+        board_cp = board.copy()
+        if board_cp[i] == "":
+            board_cp[i] = turn
+            print(board_cp)
+            print(score(board_cp, turn))
 
 
 # Ordered Opponent
 def random_click(player):
-    #minimaxClick(board, player)
-    for i in range(9):
+    minimaxClick(player)
+    '''for i in range(9):
         if board[i] == "":
             board[i] = player
             marker(board)            
             break
-            
+'''
 # Score board
 def score(board, turn):
     if board[0] == board[1] == board[2] != "": 
