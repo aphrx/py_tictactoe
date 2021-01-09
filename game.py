@@ -1,6 +1,8 @@
 import pygame
 import sys
 import time
+import math
+import numpy as np
 
 pygame.init()
 width = 900
@@ -35,31 +37,31 @@ squares = [
         (150, 750), (450, 750), (750, 750)]
 
 # Other Global Vars
-isPlayerTurn = False
 isGameRunning = True
 game_font = pygame.font.Font('font.ttf',250)
 pygame.display.set_caption("Tic-Tac-Toe")
 screen.fill(background_color)
 
 # End of game & determine winner
+def get_score(winner, player):
+    if(winner == player):
+        score = 1
+    else:
+        score = -1
+    return score
+
 def reset(winner):
-    global isGameRunning, player
-    score = 0
+    global isGameRunning, board
     if(winner != ""):
         print(winner + " wins!")
-        if(winner == player):
-            score = 1
-        else:
-            score = -1
     else:
         print("Tie game!")
     isGameRunning = False
-    return score
 
 # Create new game
 def new_game():
-    time.sleep(1)
     global isGameRunning, board
+    time.sleep(1)
     isGameRunning = True
     board = [
         "", "", "", 
@@ -96,120 +98,189 @@ def click(pos, player):
                 return 1
     return 0
 
-
-
-# Minimax Opponent
-def minimaxClick(turn):
-    
-    for i in range(9):
-        board_cp = board.copy()
-        if board_cp[i] == "":
-            board_cp[i] = turn
-            print(board_cp)
-            print(score(board_cp, turn))
-
+def get_states():
+    discrete_board = []
+    for i in board:
+        if i == "":
+            discrete_board.append(0)
+        if i == "X":
+            discrete_board.append(1)
+        if i == "O":
+            discrete_board.append(2)
+    return discrete_board
 
 # Ordered Opponent
 def random_click(player):
-    minimaxClick(player)
-    '''for i in range(9):
+    for i in range(9):
         if board[i] == "":
             board[i] = player
             marker(board)            
             break
-'''
-# Score board
-def score(board, turn):
-    if board[0] == board[1] == board[2] != "": 
-        return score_point(board[0], turn)
-    elif board[3] == board[4] == board[5] != "": 
-        return score_point(board[3], turn)
-    elif board[6] == board[7] == board[8] != "":
-        return score_point(board[6], turn)
-    elif board[0] == board[3] == board[6] != "":
-        return score_point(board[0], turn)
-    elif board[1] == board[4] == board[7] != "": 
-        return score_point(board[1], turn)
-    elif board[2] == board[5] == board[8] != "": 
-        return score_point(board[2], turn)
-    elif board[0] == board[4] == board[8] != "": 
-        return score_point(board[0], turn)
-    elif board[2] == board[4] == board[6] != "": 
-        return score_point(board[2], turn)
-    else:
-        return 0
 
-# Determine winner
-def score_point(winner, player):
-    if(winner == player):
-        return 1
-    else:
-        return -1
+def count_empty():
+    counter = 0
+    for i in board:
+        if i == "":
+            counter += 1
+    return counter
 
-def score_board(board):
-    if board[0] == board[1] == board[2] != "": 
+def minimax_click(player):
+    global board
+    pos, score = 0, 0
+    if count_empty() == 9:
+        i = np.random.randint(0, 9)
+        board[i] = player
+        marker(board)
+    else:
+        pos, score = minimax(board, player, player)
+        board[pos] = player
+        marker(board)
+
+    
+def possible_moves(board):
+    moves = []
+    for i in range(len(board)):
+        if board[i] == "":
+            moves.append(i)
+    return moves
+
+def minimax(board, turn, current):
+    global player, opponent
+    candidate = [None, None]
+
+    score, _ = score_board(board, current, False)
+
+    if abs(score) == 1 :
+        return None, score
+
+    if count_empty() == 0:
+        return None, 0
+
+    if turn == player:
+        candidate = [None, math.inf]
+    else:
+        candidate = [None, -math.inf] 
+
+    for move in possible_moves(board):
+        board[move] = turn
+        next_turn = None
+        if turn == player:
+            next_turn = opponent
+        else:
+            next_turn = player
+
+        position, score = minimax(board, next_turn, current)
+
+        board[move] = ""
+
+        if turn == player:
+            if candidate[1] > score:
+                candidate = [move, score]
+        if turn == opponent: 
+            if candidate[1] < score:
+                candidate = [move, score]
+
+    return candidate
+
+
+def score_board(board, player, IsNotAI):
+    score = 0
+    suspect = None
+    if board[0] == board[1] == board[2] != "":
+        suspect = board[0]
+        if IsNotAI:
             pygame.draw.line(screen, highlight_color, squares[0], squares[2], 30)
-            return reset(board[0])
+        score = get_score(suspect, player)
+
     elif board[3] == board[4] == board[5] != "": 
+        suspect = board[3]
+        if IsNotAI:
             pygame.draw.line(screen, highlight_color, squares[3], squares[5], 30)
-            return reset(board[3])
+        score = get_score(suspect, player)
+            
     elif board[6] == board[7] == board[8] != "":
+        suspect = board[6]
+        if IsNotAI:
             pygame.draw.line(screen, highlight_color, squares[6], squares[8], 30)
-            return reset(board[6])
+        score = get_score(suspect, player)
+
     elif board[0] == board[3] == board[6] != "":
+        suspect = board[0]
+        if IsNotAI:
             pygame.draw.line(screen, highlight_color, squares[0], squares[6], 30)
-            return reset(board[0])
+        score = get_score(suspect, player)
+
     elif board[1] == board[4] == board[7] != "": 
+        suspect = board[1]
+        if IsNotAI:
             pygame.draw.line(screen, highlight_color, squares[1], squares[7], 30)
-            return reset(board[1])
+        score = get_score(suspect, player)
+
     elif board[2] == board[5] == board[8] != "": 
+        suspect = board[2]
+        if IsNotAI:
             pygame.draw.line(screen, highlight_color, squares[2], squares[8], 30)
-            return reset(board[2])
+        score = get_score(suspect, player)
+
     elif board[0] == board[4] == board[8] != "": 
+        suspect = board[0]
+        if IsNotAI:
             pygame.draw.line(screen, highlight_color, squares[0], squares[8], 30)
-            return reset(board[0])
-    elif board[2] == board[4] == board[6] != "": 
+        score = get_score(suspect, player)
+
+    elif board[2] == board[4] == board[6] != "":
+        suspect = board[2] 
+        if IsNotAI:
             pygame.draw.line(screen, highlight_color, squares[2], squares[6], 30)
-            return reset(board[2])
-    else:
-        return 0
+        score = get_score(suspect, player)
+
+    return score, suspect
     
 
 def check_board():
+    global player
     free_squares = 0
     for i in range(9):
         if board[i] == "":
             free_squares += 1
-    if score_board(board) == 0:
+    result, suspect = score_board(board, opponent, True)
+    
+    if result == 0:
         if(free_squares == 0):
+            print(result)
             reset("")
-    
-    
+    elif suspect != None:
+        print(result)
+        reset(suspect)
 
-lines()
+def game():
+    isPlayerTurn = False
+    lines()
 
-while True:
-    pos = None
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-        
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            pos = pygame.mouse.get_pos()
-                
-    if isGameRunning:
-        if isPlayerTurn:
+    while True:
+        pos = None
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                    
+        if isGameRunning:
+            if isPlayerTurn:
 
-            if pos is not None and click(pos, player) == 1:
-                isPlayerTurn = False
+                if pos is not None and click(pos, player) == 1:
+                    isPlayerTurn = False
+            else:
+                minimax_click(opponent)
+                isPlayerTurn = True
+            check_board()
+
         else:
-            random_click(opponent)
-            isPlayerTurn = True
-        check_board()
+            new_game()
 
-    else:
-        new_game()
+        pygame.display.update()
+        clock.tick(30)
 
-    pygame.display.update()
-    clock.tick(30)
+game()
