@@ -36,6 +36,16 @@ squares = [
         (150, 450), (450, 450), (750, 450), 
         (150, 750), (450, 750), (750, 750)]
 
+# Squares which can match
+matches =  [[0, 1, 2],
+            [3, 4, 5], 
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6]]
+
 # Other Global Vars
 isGameRunning = True
 game_font = pygame.font.Font('font.ttf',250)
@@ -124,6 +134,7 @@ def count_empty():
             counter += 1
     return counter
 
+# Minimax Opponent
 def minimax_click(player):
     global board
     pos, score = 0, 0
@@ -136,7 +147,7 @@ def minimax_click(player):
         board[pos] = player
         marker(board)
 
-    
+# Possible Moves on board
 def possible_moves(board):
     moves = []
     for i in range(len(board)):
@@ -144,6 +155,7 @@ def possible_moves(board):
             moves.append(i)
     return moves
 
+# Recursive Minimax Function
 def minimax(board, turn, current):
     global player, opponent
     candidate = [None, None]
@@ -186,53 +198,13 @@ def minimax(board, turn, current):
 def score_board(board, player, IsNotAI):
     score = 0
     suspect = None
-    if board[0] == board[1] == board[2] != "":
-        suspect = board[0]
-        if IsNotAI:
-            pygame.draw.line(screen, highlight_color, squares[0], squares[2], 30)
-        score = get_score(suspect, player)
 
-    elif board[3] == board[4] == board[5] != "": 
-        suspect = board[3]
-        if IsNotAI:
-            pygame.draw.line(screen, highlight_color, squares[3], squares[5], 30)
-        score = get_score(suspect, player)
-            
-    elif board[6] == board[7] == board[8] != "":
-        suspect = board[6]
-        if IsNotAI:
-            pygame.draw.line(screen, highlight_color, squares[6], squares[8], 30)
-        score = get_score(suspect, player)
-
-    elif board[0] == board[3] == board[6] != "":
-        suspect = board[0]
-        if IsNotAI:
-            pygame.draw.line(screen, highlight_color, squares[0], squares[6], 30)
-        score = get_score(suspect, player)
-
-    elif board[1] == board[4] == board[7] != "": 
-        suspect = board[1]
-        if IsNotAI:
-            pygame.draw.line(screen, highlight_color, squares[1], squares[7], 30)
-        score = get_score(suspect, player)
-
-    elif board[2] == board[5] == board[8] != "": 
-        suspect = board[2]
-        if IsNotAI:
-            pygame.draw.line(screen, highlight_color, squares[2], squares[8], 30)
-        score = get_score(suspect, player)
-
-    elif board[0] == board[4] == board[8] != "": 
-        suspect = board[0]
-        if IsNotAI:
-            pygame.draw.line(screen, highlight_color, squares[0], squares[8], 30)
-        score = get_score(suspect, player)
-
-    elif board[2] == board[4] == board[6] != "":
-        suspect = board[2] 
-        if IsNotAI:
-            pygame.draw.line(screen, highlight_color, squares[2], squares[6], 30)
-        score = get_score(suspect, player)
+    for m in matches:
+        if board[m[0]] == board[m[1]] == board[m[2]] != "":
+            suspect = board[m[0]]
+            if IsNotAI:
+                pygame.draw.line(screen, highlight_color, squares[m[0]], squares[m[2]], 30)
+            score = get_score(suspect, player)
 
     return score, suspect
     
