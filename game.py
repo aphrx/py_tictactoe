@@ -3,6 +3,7 @@ import sys
 import time
 import math
 import numpy as np
+import random
 
 pygame.init()
 width = 900
@@ -25,16 +26,14 @@ player = "O"
 opponent = "X"
 
 # Tic Tac Tie Board
-board = [
-    "", "", "", 
-    "", "", "", 
-    "", "", ""]
+board = ["", "", "", 
+         "", "", "", 
+         "", "", ""]
 
 # Each square's center coordinate
-squares = [
-        (150, 150), (450, 150), (750, 150), 
-        (150, 450), (450, 450), (750, 450), 
-        (150, 750), (450, 750), (750, 750)]
+squares =  [(150, 150), (450, 150), (750, 150), 
+            (150, 450), (450, 450), (750, 450), 
+            (150, 750), (450, 750), (750, 750)]
 
 # Squares which can match
 matches =  [[0, 1, 2],
@@ -54,14 +53,14 @@ screen.fill(background_color)
 
 # End of game & determine winner
 def get_score(winner, player):
-    if(winner == player):
-        score = 1
+    if player is winner:
+        return 1
     else:
-        score = -1
-    return score
+        return -1
 
+# Determine winner and end game
 def reset(winner):
-    global isGameRunning, board
+    global isGameRunning
     if(winner != ""):
         print(winner + " wins!")
     else:
@@ -70,22 +69,20 @@ def reset(winner):
 
 # Create new game
 def new_game():
-    global isGameRunning, board
+    global board, isGameRunning
     time.sleep(1)
     isGameRunning = True
-    board = [
-        "", "", "", 
-        "", "", "", 
-        "", "", ""]
+    board = []
+    for i in range(9):
+        board.append("")
     screen.fill(background_color)
     lines()
 
 # Draw lines
 def lines():
-    pygame.draw.line(screen, line_color, (line_padding, (width/3)), (width - line_padding,(width/3)), line_stroke)
-    pygame.draw.line(screen, line_color, (line_padding, (width/3)*2), (width - line_padding,(width/3)*2), line_stroke)
-    pygame.draw.line(screen, line_color, ((width/3), line_padding), ((width/3),   width - line_padding), line_stroke)
-    pygame.draw.line(screen, line_color, ((width/3)*2, line_padding), ((width/3)*2, width - line_padding), line_stroke)
+    for i in range(1, 3):
+        pygame.draw.line(screen, line_color, (line_padding, (width/3)*i), (width - line_padding,(width/3)*i), line_stroke)
+        pygame.draw.line(screen, line_color, ((width/3)*i, line_padding), ((width/3)*i,   width - line_padding), line_stroke)
 
 # Draw opponent & player markers
 def marker(board):
@@ -108,25 +105,15 @@ def click(pos, player):
                 return 1
     return 0
 
-def get_states():
-    discrete_board = []
-    for i in board:
-        if i == "":
-            discrete_board.append(0)
-        if i == "X":
-            discrete_board.append(1)
-        if i == "O":
-            discrete_board.append(2)
-    return discrete_board
-
 # Ordered Opponent
-def random_click(player):
+def ordered_click(player):
     for i in range(9):
         if board[i] == "":
             board[i] = player
             marker(board)            
             break
 
+# Count empty tiles
 def count_empty():
     counter = 0
     for i in board:
@@ -136,16 +123,12 @@ def count_empty():
 
 # Minimax Opponent
 def minimax_click(player):
-    global board
-    pos, score = 0, 0
     if count_empty() == 9:
-        i = np.random.randint(0, 9)
-        board[i] = player
-        marker(board)
+        pos = random.choice([0, 2, 6, 8])
     else:
-        pos, score = minimax(board, player, player)
-        board[pos] = player
-        marker(board)
+        pos, _ = minimax(board, player)
+    board[pos] = player
+    marker(board)
 
 # Possible Moves on board
 def possible_moves(board):
@@ -156,16 +139,14 @@ def possible_moves(board):
     return moves
 
 # Recursive Minimax Function
-def minimax(board, turn, current):
-    global player, opponent
+def minimax(board, turn):
     candidate = [None, None]
 
-    score, _ = score_board(board, current, False)
+    score, _ = score_board(board, opponent, False)
 
-    if abs(score) == 1 :
+    if abs(score) == 1: 
         return None, score
-
-    if count_empty() == 0:
+    elif count_empty() == 0: 
         return None, 0
 
     if turn == player:
@@ -175,27 +156,22 @@ def minimax(board, turn, current):
 
     for move in possible_moves(board):
         board[move] = turn
-        next_turn = None
         if turn == player:
-            next_turn = opponent
+            position, score = minimax(board, opponent)
         else:
-            next_turn = player
-
-        position, score = minimax(board, next_turn, current)
+            position, score = minimax(board, player)
 
         board[move] = ""
 
-        if turn == player:
-            if candidate[1] > score:
-                candidate = [move, score]
-        if turn == opponent: 
-            if candidate[1] < score:
-                candidate = [move, score]
+        if turn == player and candidate[1] > score:
+            candidate = [move, score]
+        elif turn == opponent and candidate[1] < score:
+            candidate = [move, score]
 
     return candidate
 
 
-def score_board(board, player, IsNotAI):
+def score_board(board, turn, IsNotAI):
     score = 0
     suspect = None
 
@@ -204,25 +180,22 @@ def score_board(board, player, IsNotAI):
             suspect = board[m[0]]
             if IsNotAI:
                 pygame.draw.line(screen, highlight_color, squares[m[0]], squares[m[2]], 30)
-            score = get_score(suspect, player)
+            score = get_score(suspect, turn)
 
     return score, suspect
-    
 
 def check_board():
-    global player
     free_squares = 0
     for i in range(9):
         if board[i] == "":
             free_squares += 1
+         
     result, suspect = score_board(board, opponent, True)
     
     if result == 0:
         if(free_squares == 0):
-            print(result)
             reset("")
     elif suspect != None:
-        print(result)
         reset(suspect)
 
 def game():
@@ -241,14 +214,12 @@ def game():
                     
         if isGameRunning:
             if isPlayerTurn:
-
                 if pos is not None and click(pos, player) == 1:
                     isPlayerTurn = False
             else:
                 minimax_click(opponent)
                 isPlayerTurn = True
             check_board()
-
         else:
             new_game()
 
